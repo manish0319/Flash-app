@@ -468,7 +468,7 @@ function report(r){
     });
   });
   const totalNg=Number(r.ng||0);
-  return `<div class="report-head" style="display:flex;align-items:center;gap:18px;border-bottom:2px solid #000;padding:0 0 10px;margin-bottom:10px"><img src="${COMPANY_LOGO}" alt="TMKI logo" style="width:260px;max-height:60px;object-fit:contain"><div style="flex:1;text-align:center"><h2 style="font-size:19px;line-height:1.25;color:#000;margin:0">VISUAL DIMENSION INSPECTION REPORT</h2><div style="font-size:10px;color:#000;margin-top:5px">Doc No.: CD-I-025-02 · Rev. 00</div></div></div>
+  return `<div class="report-head" style="display:flex;align-items:center;gap:18px;border-bottom:2px solid #000;padding:0 0 10px;margin-bottom:10px"><img src="${COMPANY_LOGO}" alt="TMKI logo" style="width:260px;max-height:60px;object-fit:contain"><div style="flex:1;text-align:center"><h2 style="font-size:19px;line-height:1.25;color:#000;margin:0">VISUAL DIMENSION INSPECTION REPORT</h2><div style="font-size:10px;color:#000;margin-top:5px"></div></div></div>
   <table class="meta"><tr><td><b>Date / Time</b><br>${esc(r.t||"—")}</td><td><b>Shift</b><br>${esc(r.shift||"—")}</td><td><b>Inspector</b><br>${esc(r.insp||"—")}</td></tr>
   <tr><td><b>Inspection Type</b><br>${esc(r.inspectionType||"—")}</td><td><b>Part Name</b><br>${esc(r.part||"—")}</td><td><b>Lot No. / Cavity No.</b><br>${esc(r.lot||"—")} / ${esc(r.cav||"—")}</td></tr></table>
   <table><thead><tr><th>#</th><th>Inspection Characteristic</th><th>Result</th><th>Recorded Readings / Locations</th><th>Remarks</th></tr></thead><tbody>${rows}</tbody></table>
