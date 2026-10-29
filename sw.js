@@ -1,10 +1,11 @@
-const CACHE_NAME = "flashguard-v2";
+const CACHE_NAME = "tmki-flash-v3";
 const APP_FILES = [
   "./",
   "./index.html",
   "./manifest.json",
   "./icon-192.png",
-  "./icon-512.png"
+  "./icon-512.png",
+  "./company-logo.jpg"
 ];
 
 self.addEventListener("install", event => {
