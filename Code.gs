@@ -5,13 +5,13 @@ const PHOTO_FOLDER_NAME = "FlashGuard Inspection Photos";
 const REPORT_HEADERS = [
   "Report ID", "Date/Time", "Shift", "Part Name", "Lot No",
   "Cavity No", "Inspector", "Comments", "NG Item Count",
-  "Overall Result", "Received At"
+  "Overall Result", "Received At", "Inspection Type"
 ];
 
 const DETAIL_HEADERS = [
   "Report ID", "Date/Time", "Lot No", "Inspector", "Item No",
   "Inspection Item", "Overall Result", "Location", "Reading (mm)",
-  "Location Result", "Remark", "Photo URL"
+  "Location Result", "Remark", "Photo URL", "Inspection Type", "Photo Reading (mm)"
 ];
 
 function doGet() {
@@ -87,7 +87,8 @@ function doPost(e) {
           index + 1, item.k || "",
           item.r === "ng" ? "NOT OK" : "OK",
           entry.loc || "", entry.v === "" ? "" : entry.v,
-          entry.ng ? "NG" : "OK", entry.n || "", photoUrl
+          entry.ng ? "NG" : "OK", entry.n || "", photoUrl,
+          rec.inspectionType || "", ""
         ]);
       });
 
@@ -97,7 +98,7 @@ function doPost(e) {
           String(rec.uid), rec.t || "", rec.lot || "", rec.insp || "",
           index + 1, item.k || "",
           item.r === "ng" ? "NOT OK" : "OK",
-          "", "", "", "", ""
+          "", "", "", "", "", rec.inspectionType || "", ""
         ]);
       }
 
@@ -109,8 +110,9 @@ function doPost(e) {
         );
         detailRows.push([
           String(rec.uid), rec.t || "", rec.lot || "", rec.insp || "",
-          index + 1, item.k || "", "PHOTO EVIDENCE",
-          photo.loc || "", "", "", photo.n || "", photoUrl
+          index + 1, item.k || "", photo.r === "ng" ? "NOT OK (NG PHOTO)" : "OK PHOTO",
+          photo.loc || "", photo.v || "", photo.r === "ng" ? "NG" : "OK",
+          photo.n || "", photoUrl, rec.inspectionType || "", photo.v || ""
         ]);
       });
     });
@@ -126,7 +128,7 @@ function doPost(e) {
     reports.appendRow([
       String(rec.uid), rec.t || "", rec.shift || "", rec.part || "",
       rec.lot || "", rec.cav || "", rec.insp || "", rec.cm || "",
-      Number(rec.ng || 0), overall, new Date()
+      Number(rec.ng || 0), overall, new Date(), rec.inspectionType || ""
     ]);
     SpreadsheetApp.flush();
 

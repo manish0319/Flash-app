@@ -1,21 +1,27 @@
-FlashGuard DGBB Cage Inspection – GitHub Pages update
+TMKI FLASH INSPECTION — UPDATE V4
 
-FILES
-- index.html: redesigned app; hides blank A-Z rows in printed reports and CSV exports; improves photo marking and report layout.
-- manifest.json, sw.js, icon-192.png, icon-512.png: updated PWA metadata, cache version and icon.
+Files
+- index.html: updated inspection app and print report
+- company-logo.jpg: TMKI logo
+- icon-192.png / icon-512.png: app icons
+- manifest.json / sw.js: PWA metadata and cache version
+- Code.gs: Google Apps Script backend for Google Sheets and photo upload
 
-GITHUB PAGES
-1. Back up your current repository files.
-2. Upload/replace these five files in the same folder as the current index.html.
-3. Commit changes.
-4. Open the app and hard-refresh (Ctrl+Shift+R). If installed as a PWA, close/reopen it after the service worker updates.
+GitHub Pages update
+1. Extract this ZIP.
+2. Upload all files in this folder to the root of the existing flash-app repository, replacing files with the same names.
+3. Commit the changes.
+4. Open the app and hard refresh (Ctrl+Shift+R).
 
-GOOGLE SHEETS
-Code.gs is supplied separately. Paste it into Apps Script, save, then Deploy > Manage deployments > Edit > New version > Deploy.
-The script creates/uses Reports and Inspection_Details tabs and saves photo files to a private-by-default Drive folder. Review your company Drive sharing policy and authorize Drive access when prompted.
-The app's CFG.url must point to the active deployed Web App /exec URL. Do not replace it unless you have a new deployment URL.
+Google Apps Script update
+1. Open the Apps Script project connected to the spreadsheet.
+2. Replace Code.gs with this package's Code.gs and save.
+3. Deploy > Manage deployments > Edit > New version > Deploy.
+4. The script needs authorization for the spreadsheet and Drive photo folder.
 
-IMPORTANT
-- A-Z rows with no reading, NG status, remark or photo are omitted from print/CSV and Google Sheet detail rows.
-- Photos are saved to Google Drive and their links appear in Inspection_Details. Drive file access follows the owner's sharing policy; files are not made public by this code.
-- Test with a non-production inspection report first. Keep the old files and pending local reports until the test succeeds.
+Print notes
+- The report title is FLASH INSPECTION REPORT and the app header is hidden during print.
+- Chrome can add its own browser header/footer outside the page content. In the print dialog, open More settings and uncheck Headers and footers to remove that browser-generated line.
+- No inspector/approval signature section is included.
+
+Before production use, submit a test report and verify Google Sheet rows and Drive photo links. Do not delete existing pending reports until tested.
