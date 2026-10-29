@@ -1,1 +1,14 @@
-{"name":"DGBB Flash Inspection","short_name":"Flash Insp","start_url":"./index.html","scope":"./","display":"standalone","orientation":"portrait","background_color":"#f4f5f7","theme_color":"#1f4fd8","icons":[{"src":"icon-192.png","sizes":"192x192","type":"image/png","purpose":"any maskable"},{"src":"icon-512.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}]}
+{
+  "name": "FlashGuard DGBB Cage Inspection",
+  "short_name": "FlashGuard",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f2f5f9",
+  "theme_color": "#1748c9",
+  "icons": [
+    {"src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable"},
+    {"src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"}
+  ]
+}

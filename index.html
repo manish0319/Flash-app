@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>DGBB Flash Inspection</title>
+<title>FlashGuard | DGBB Cage Inspection</title>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#1f4fd8">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -55,12 +55,64 @@ table.h{width:100%;border-collapse:collapse;font-size:13px}table.h td,table.h th
 .toast.show{display:block}.toast.bad{background:#b3261e}
 #prt{display:none}
 @media print{.wrap,.bar,.mk,.toast{display:none!important}#prt{display:block}body{background:#fff}@page{size:A4;margin:10mm}}
+
+/* FlashGuard professional plant UI */
+:root{--bg:#f2f5f9;--card:#fff;--tx:#172033;--mut:#68758b;--bd:#dbe2ec;--ok:#16794b;--okbg:#e7f6ee;--ng:#c62828;--ngbg:#fff0ef;--ac:#1748c9}
+body{font-family:Inter,"Segoe UI",Roboto,Arial,sans-serif;background:linear-gradient(180deg,#eaf0fb 0,#f4f6fa 220px,var(--bg) 220px);letter-spacing:.05px}
+.wrap{max-width:760px;padding:18px 16px 112px}
+.apphead{display:flex;align-items:center;gap:12px;padding:8px 2px 16px}
+.brandmark{width:48px;height:48px;object-fit:cover;border-radius:14px;background:#1748c9;display:block;flex-shrink:0;box-shadow:0 7px 18px #1748c933}
+.brandcopy{min-width:0;flex:1}.eyebrow{font-size:10px;font-weight:800;letter-spacing:1.5px;color:#1748c9}
+h1{font-size:22px;line-height:1.2;margin:3px 0 3px;font-weight:800;letter-spacing:-.5px}
+.sub{font-size:12px;color:var(--mut);margin:0}
+.livepill{white-space:nowrap;border:1px solid #b8c8ef;background:#f7f9ff;color:#1748c9;border-radius:999px;padding:7px 10px;font-size:10px;font-weight:800;letter-spacing:.5px}
+.livepill span{display:inline-block;width:6px;height:6px;background:#16a36a;border-radius:50%;margin-right:5px}
+.intro{display:flex;align-items:center;justify-content:space-between;gap:12px;background:linear-gradient(120deg,#173fba,#2864e8);color:white;padding:17px;border-radius:16px;margin:0 0 14px;box-shadow:0 9px 24px #1748c921}
+.intro-title{font-size:16px;font-weight:800;margin-bottom:4px}.intro-copy{font-size:12px;line-height:1.5;color:#e1eaff;max-width:520px}
+.intro-icon{font-size:35px;line-height:1;border:1px solid #ffffff66;border-radius:13px;width:54px;height:54px;display:grid;place-items:center;flex-shrink:0}
+.card{border:1px solid #e0e6ef;border-radius:15px;padding:15px;margin-bottom:12px;box-shadow:0 3px 10px #142b4b08}
+label{font-size:11px;font-weight:700;letter-spacing:.2px;color:#68758b;margin-bottom:5px}
+input,select,textarea{border:1px solid #d7dfeb;border-radius:9px;background:#fbfcfe;color:var(--tx);padding:11px;font-size:14px;outline:none}
+input:focus,select:focus,textarea:focus{border-color:#6487e9;box-shadow:0 0 0 3px #1748c918}
+.item .it{font-size:15px;font-weight:800;color:#1c2b43}
+.hi{font-size:12px;line-height:1.5;color:#718097;margin:4px 0 12px}
+.btns button{padding:11px;border-radius:10px;font-size:14px;font-weight:750;cursor:pointer}
+.btns button:not(.on){background:#f8faff}
+.cnt{padding:9px 10px;background:#f5f7fb;border:1px solid #e5eaf2;border-radius:10px}
+.prow{grid-template-columns:38px minmax(70px,1fr) 88px;gap:9px;padding:8px 2px}
+.prow input{min-width:0}
+.lt{font-size:14px;color:#40516b;background:#eef2f8;border-radius:8px;padding:8px 0}
+.tg{font-size:12px;font-weight:800;cursor:pointer}
+.ent{background:#f8faff;border:1px solid #e5eaf2;border-radius:10px;padding:10px}
+.warn{background:#fff2f0;border:1px solid #ffd1cc;padding:9px;border-radius:8px}
+.psec{border-top:1px solid #e4eaf3}
+.ph img{max-height:280px;object-fit:contain;background:#101828}
+.bar{background:#ffffffed;backdrop-filter:blur(12px);border-top:1px solid #dce4ef;box-shadow:0 -5px 20px #1720330a}
+.bar .in{max-width:760px}.pri{background:linear-gradient(120deg,#1748c9,#2864e8);border-radius:10px;font-size:14px;font-weight:800;box-shadow:0 4px 12px #1748c926}
+.sec{border-radius:9px;font-size:12px;font-weight:750;background:#fff}
+#hist th{font-size:10px;text-transform:uppercase;letter-spacing:.7px;color:#68758b}
+#hist td{padding:10px 5px}
+.mk{background:rgba(10,17,30,.97);padding:16px}
+.mk p{font-weight:700;font-size:15px}
+.mk canvas{max-height:65vh;border:1px solid #ffffff33;box-shadow:0 8px 30px #0008}
+.mk .b{grid-template-columns:1fr 1fr 1fr}
+.mk .toolrow{display:flex;justify-content:center;gap:8px;flex-wrap:wrap}
+.mk select{width:auto;min-width:130px;background:#202938;color:#fff;border-color:#596579}
+.toast{border-radius:12px;box-shadow:0 8px 25px #0003}
+@media(min-width:650px){.grid{grid-template-columns:repeat(3,minmax(0,1fr))}.intro{padding:20px}.item{padding:17px}}
+@media(max-width:430px){.wrap{padding:12px 10px 105px}.apphead{gap:9px}.brandmark{width:42px;height:42px}.eyebrow{font-size:9px}.livepill{font-size:9px;padding:6px 7px}h1{font-size:19px}.intro{padding:14px}.intro-icon{width:44px;height:44px}.card{padding:12px}}
+@media print{.rp{font:10.5px/1.35 Arial,sans-serif}.rp h2{font-size:17px}.rp .report-head{border-bottom:3px solid #1748c9;padding-bottom:8px}.rp .meta{background:#f2f5fb}.rp table{page-break-inside:auto}.rp tr{break-inside:avoid}.rp .pg{grid-template-columns:1fr 1fr}.rp .pg div{break-inside:avoid}.rp .pg img{max-height:220px;object-fit:contain}}
+
 </style>
 </head>
 <body>
 <div class="wrap">
-  <h1>Flash Inspection – DGBB Cage</h1>
-  <div class="sub">Doc: CD-I-025-02 · Rev 00 · Daily Inspection · app v4</div>
+  <header class="apphead">
+    <img class="brandmark" src="icon-192.png" alt="Flash defect inspection icon">
+    <div class="brandcopy"><div class="eyebrow">MANU YANTRALAYA · QUALITY</div><h1>FlashGuard Inspection</h1><div class="sub">DGBB Cage · CD-I-025-02 · Rev 00</div></div>
+    <div class="livepill"><span></span> DAILY CHECK</div>
+  </header>
+  <div class="intro"><div><div class="intro-title">Visual & dimensional inspection</div><div class="intro-copy">Record only the readings you actually inspect. Mark defects and attach evidence when required.</div></div><div class="intro-icon">⌕</div></div>
 
   <div class="card"><div class="grid">
     <div><label>Date / Time (auto)</label><input id="dt" readonly></div>
@@ -85,9 +137,10 @@ table.h{width:100%;border-collapse:collapse;font-size:13px}table.h td,table.h th
 <div class="bar"><div class="in"><div class="prog" id="prog"></div><button class="pri" id="save">Submit</button></div></div>
 
 <div id="mk" class="mk" hidden>
-  <p>Tap on the photo where the defect is. A red circle will be added.</p>
+  <p>Mark the defect location on the photo</p>
+  <div class="toolrow"><label for="markStyle" style="color:#fff;align-self:center">Marker</label><select id="markStyle"><option value="circle">Red circle</option><option value="arrow">Arrow pointer</option></select><button class="sec" id="clearMarks">Clear marks</button></div>
   <canvas id="cv"></canvas>
-  <div class="b"><button class="sec" id="mu">↶ Undo</button><button class="sec" id="mc">Cancel</button><button class="pri" id="md">Done</button></div>
+  <div class="b"><button class="sec" id="mu">↶ Undo</button><button class="sec" id="mc">Cancel</button><button class="pri" id="md">Save photo</button></div>
 </div>
 <div id="toast" class="toast"></div>
 <div id="prt" class="rp"></div>
@@ -203,13 +256,14 @@ $("fi").onchange=e=>{const f=e.target.files[0];if(!f||!cur)return;
     base=document.createElement("canvas");base.width=w;base.height=h;base.getContext("2d").drawImage(im,0,0,w,h);
     URL.revokeObjectURL(u);marks=[];const c=$("cv");c.width=w;c.height=h;draw();$("mk").hidden=false};
   im.onerror=()=>msg("Could not open the photo.",1);im.src=u};
-function draw(){const c=$("cv"),x=c.getContext("2d");x.drawImage(base,0,0);
-  const r=Math.max(c.width,c.height)*0.05;x.strokeStyle="#ff1744";x.fillStyle="#ff1744";x.lineWidth=Math.max(4,c.width*0.008);
-  marks.forEach(m=>{x.beginPath();x.arc(m[0],m[1],r,0,7);x.stroke();x.beginPath();x.arc(m[0],m[1],x.lineWidth,0,7);x.fill()})}
-$("cv").onclick=e=>{const c=$("cv"),r=c.getBoundingClientRect();marks.push([(e.clientX-r.left)*c.width/r.width,(e.clientY-r.top)*c.height/r.height]);draw()};
+function draw(){const c=$("cv"),x=c.getContext("2d");if(!base)return;x.clearRect(0,0,c.width,c.height);x.drawImage(base,0,0);
+  const r=Math.max(c.width,c.height)*0.045;x.strokeStyle="#ff1744";x.fillStyle="#ff1744";x.lineWidth=Math.max(5,c.width*0.009);x.lineCap="round";x.lineJoin="round";
+  marks.forEach(m=>{x.beginPath();if(m.type==="arrow"){const a=m[0],b=m[1],len=r*1.6,ang=-Math.PI/4,ex=a+Math.cos(ang)*len,ey=b+Math.sin(ang)*len;x.moveTo(ex,ey);x.lineTo(a,b);x.stroke();x.beginPath();x.moveTo(a,b);x.lineTo(a+Math.cos(ang+2.55)*r*.65,b+Math.sin(ang+2.55)*r*.65);x.moveTo(a,b);x.lineTo(a+Math.cos(ang-2.55)*r*.65,b+Math.sin(ang-2.55)*r*.65);x.stroke()}else{x.arc(m[0],m[1],r,0,Math.PI*2);x.stroke();x.beginPath();x.arc(m[0],m[1],Math.max(2,x.lineWidth*.6),0,Math.PI*2);x.fill()}})}
+$("cv").onclick=e=>{const c=$("cv"),r=c.getBoundingClientRect();marks.push({0:(e.clientX-r.left)*c.width/r.width,1:(e.clientY-r.top)*c.height/r.height,type:$("markStyle").value});draw()};
 $("mu").onclick=()=>{marks.pop();draw()};
+$("clearMarks").onclick=()=>{marks=[];draw()};
 $("mc").onclick=()=>{$("mk").hidden=true};
-$("md").onclick=()=>{const u=$("cv").toDataURL("image/jpeg",0.7);if(cur.p)S[cur.i].p[cur.k].img=u;else S[cur.i].e[cur.j].img=u;$("mk").hidden=true;renderItem(cur.i);if(!marks.length)msg("Saved without a defect marker.")};
+$("md").onclick=()=>{const u=$("cv").toDataURL("image/jpeg",0.88);if(cur.p)S[cur.i].p[cur.k].img=u;else S[cur.i].e[cur.j].img=u;$("mk").hidden=true;renderItem(cur.i);if(!marks.length)msg("Saved without a defect marker.")};
 
 // ---------- submit
 function check(){
@@ -229,21 +283,33 @@ $("save").onclick=async()=>{const er=check();if(er){msg(er[0],1);const t=$(er[1]
   msg(rec.ng?"Saved. NOT OK items found. Inform the supervisor.":"Saved. All OK.",!!rec.ng);sync()};
 
 // ---------- report
-const RS=`.rp{font:12px/1.35 Arial,sans-serif;color:#000;background:#fff}.rp h2{margin:8px 0 4px;font-size:16px}.rp table{width:100%;border-collapse:collapse;margin:6px 0}.rp td,.rp th{border:1px solid #000;padding:3px 5px;vertical-align:top;text-align:left}.rp .ng{color:#c00;font-weight:700}.rp .ok{color:#060;font-weight:700}.rp .pg{display:grid;grid-template-columns:1fr 1fr;gap:8px}.rp .pg div{border:1px solid #000;padding:4px;break-inside:avoid}.rp .pg img{width:100%}.rp .sg{display:flex;justify-content:space-between;margin-top:40px}.rp tr{break-inside:avoid}`;
-function report(r){let rows="",ph="";
+const RS=`.rp{font:12px/1.35 Arial,sans-serif;color:#000;background:#fff}.rp h2{margin:8px 0 4px;font-size:16px}.rp table{width:100%;border-collapse:collapse;margin:6px 0}.rp td,.rp th{border:1px solid #000;padding:3px 5px;vertical-align:top;text-align:left}.rp .ng{color:#c00;font-weight:700}.rp .ok{color:#060;font-weight:700}.rp .pg{display:grid;grid-template-columns:1fr 1fr;gap:8px}.rp .pg div.photo-card{border:1px solid #b8c2d2;padding:6px;border-radius:5px;break-inside:avoid;background:#fff}.rp .pg img{width:100%;max-height:230px;object-fit:contain}.rp .photo-caption{font-size:10px;padding-top:4px}.rp .meta{background:#f3f6fb}.rp .sg{display:flex;justify-content:space-between;margin-top:40px}.rp tr{break-inside:avoid}`;
+function report(r){
+  let rows="",ph="";
   r.items.forEach((it,i)=>{
-    const rd=it.loc?it.e.map(e=>`<span class="${e.ng?"ng":""}">${e.loc}${it.val?": "+esc(e.v||"-"):""}${e.ng?" (NG)":""}</span>`).join(" &nbsp; "):(it.val?esc(it.e[0].v?it.e[0].v+" mm":"-"):"-");
-    const rm=it.e.filter(e=>e.n).map(e=>(e.loc?e.loc+": ":"")+esc(e.n)).join("; ");
-    rows+=`<tr><td>${i+1}</td><td>${esc(it.k)}</td><td class="${it.r}">${it.r==="ok"?"OK":"NOT OK"}</td><td>${rd}</td><td>${rm}</td></tr>`;
-    it.e.forEach(e=>{if(e.img)ph+=`<div><img src="${e.img}"><b>${i+1}. ${esc(it.k)}</b>${e.loc?" – "+esc(it.loc)+" "+esc(e.loc):""}${e.v?" – "+esc(e.v)+" mm":""}<br>${esc(e.n)}</div>`});(it.p||[]).forEach(x=>{if(x.img)ph+=`<div><img src="${x.img}"><b>${i+1}. ${esc(it.k)}</b>${x.loc?" – "+esc(it.loc)+" "+esc(x.loc):""}<br>${esc(x.n)}</div>`});});
-  return `<h2 style="margin-top:0">Flash Data (Controlled Copy) – DGBB Cage</h2>
-  <table><tr><td>Document: CD-I-025-02</td><td>Rev: 00</td><td>Inspection: Daily</td><td>Date: ${esc(r.t)}</td></tr>
-  <tr><td>Part: ${esc(r.part)}</td><td>Lot: ${esc(r.lot)}</td><td>Cavity: ${esc(r.cav)}</td><td>Shift: ${esc(r.shift)} · Inspector: ${esc(r.insp)}</td></tr></table>
-  <table><tr><th>#</th><th>Item</th><th>Result</th><th>Readings (mm)</th><th>Remarks</th></tr>${rows}</table>
-  <p><b>Overall:</b> <span class="${r.ng?"ng":"ok"}">${r.ng?r.ng+" item(s) NOT OK":"ALL OK"}</span></p>
-  ${r.cm?`<p><b>Comments:</b> ${esc(r.cm)}</p>`:""}
-  ${ph?`<h2>NG Photos</h2><div class="pg">${ph}</div>`:""}
-  <div class="sg"><span>Inspector sign: ________</span><span>Supervisor sign: ________</span></div>`}
+    const entries=it.loc
+      ? (it.e||[]).filter(e=>String(e.v??"").trim()!==""||e.ng||String(e.n||"").trim()!==""||!!e.img)
+      : (it.e||[]);
+    // For A–Z location-based checks, omit untouched/blank locations from print.
+    if(it.loc && entries.length===0) return;
+    const rd=it.loc
+      ? entries.map(e=>`<span class="${e.ng?"ng":"ok"}">${esc(e.loc)}${it.val?": "+esc(e.v||"-"):""}${e.ng?" (NG)":" (OK)"}</span>`).join(" &nbsp; ")
+      : (it.val?esc((entries[0]&&entries[0].v)?entries[0].v+" mm":"-"):"—");
+    const rm=entries.filter(e=>e.n).map(e=>(e.loc?esc(e.loc)+": ":"")+esc(e.n)).join("; ");
+    rows+=`<tr><td>${i+1}</td><td>${esc(it.k)}</td><td class="${it.r}">${it.r==="ok"?"OK":"NOT OK"}</td><td>${rd}</td><td>${rm||"—"}</td></tr>`;
+    entries.forEach(e=>{if(e.img)ph+=`<div class="photo-card"><img src="${e.img}"><div class="photo-caption"><b>${i+1}. ${esc(it.k)}</b><br>${e.loc?"Location: "+esc(it.loc)+" "+esc(e.loc)+" · ":""}${e.v?"Reading: "+esc(e.v)+" mm · ":""}<b class="${e.ng?"ng":"ok"}">${e.ng?"NOT OK":"Photo evidence"}</b><br>Remark: ${esc(e.n||"—")}</div></div>`});
+    (it.p||[]).forEach(x=>{if(x.img)ph+=`<div class="photo-card"><img src="${x.img}"><div class="photo-caption"><b>${i+1}. ${esc(it.k)}</b><br>${x.loc?"Location: "+esc(it.loc||"Area")+" "+esc(x.loc)+" · ":""}<br>Remark: ${esc(x.n||"—")}</div></div>`});
+  });
+  return `<div class="report-head"><div style="font-size:10px;letter-spacing:1.5px;color:#1748c9;font-weight:bold">MANU YANTRALAYA · QUALITY ASSURANCE</div><h2>Flash Inspection Report — DGBB Cage</h2><div style="font-size:10px;color:#555">Document: CD-I-025-02 · Rev 00 · Controlled Inspection Record</div></div>
+  <table class="meta"><tr><td><b>Date / Time</b><br>${esc(r.t)}</td><td><b>Shift</b><br>${esc(r.shift)}</td><td><b>Inspector</b><br>${esc(r.insp)}</td></tr>
+  <tr><td><b>Part Name</b><br>${esc(r.part||"—")}</td><td><b>Lot No.</b><br>${esc(r.lot)}</td><td><b>Cavity No.</b><br>${esc(r.cav)}</td></tr></table>
+  <table><thead><tr><th>#</th><th>Inspection Characteristic</th><th>Result</th><th>Recorded Readings / Locations</th><th>Remarks</th></tr></thead><tbody>${rows}</tbody></table>
+  <p style="padding:8px;background:#f2f5fb;border-left:4px solid ${r.ng?"#c62828":"#16794b"}"><b>Overall result:</b> <span class="${r.ng?"ng":"ok"}">${r.ng?r.ng+" NOT OK inspection item(s)":"ALL CHECKED ITEMS OK"}</span></p>
+  ${r.cm?`<p><b>General comments:</b> ${esc(r.cm)}</p>`:""}
+  ${ph?`<h2>Photo Evidence & Defect Marking</h2><div class="pg">${ph}</div>`:""}
+  <div class="sg"><span>Inspector: __________________</span><span>Supervisor: __________________</span><span>Date: ______________</span></div>
+  <p style="font-size:9px;color:#666;margin-top:16px">Generated by FlashGuard Inspection App. Location rows with no reading, NG status, remark or photo are intentionally omitted.</p>`;
+}
 async function getRec(id){return(await dbAll()).find(x=>x.id===id)}
 function printRec(r){$("prt").innerHTML=`<style>${RS}</style>`+report(r);try{window.print()}catch(e){msg("Printing is blocked. Use “Report file”.",1)}}
 async function saveFile(name,data){try{const d=await claude.use("downloads");if(d){await d.save({filename:name,data});return}}catch(e){}msg("Download is not available here.",1)}
@@ -257,9 +323,17 @@ $("hist").addEventListener("click",async e=>{const b=e.target.closest("button");
   else if(b.dataset.d){const r=await getRec(+b.dataset.d);
     saveFile(fn(r)+".html",`<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(fn(r))}</title><style>${RS}body{margin:12px}@page{size:A4;margin:10mm}</style></head><body><div class="rp">${report(r)}</div></body></html>`)}
   else if(b.dataset.x){if(b.dataset.s!=="1"){b.dataset.s="1";b.textContent="Sure?";setTimeout(()=>{b.dataset.s="";b.textContent="🗑"},3000)}else{await dbDel(+b.dataset.x);hist()}}});
-$("csv").onclick=async()=>{const q=s=>'"'+String(s??"").replace(/"/g,'""')+'"',L=[["Time","Shift","Part","Lot","Cavity","Inspector","Item","Result","Location","Value","Remark","Photo"]];
-  (await dbAll()).forEach(r=>r.items.forEach(it=>it.e.forEach(e=>L.push([r.t,r.shift,r.part,r.lot,r.cav,r.insp,it.k,e.ng?"NOT OK":"OK",e.loc,e.v,e.n,e.img?"yes":""]))));
-  saveFile("dgbb_flash_all.csv","\ufeff"+L.map(r=>r.map(q).join(",")).join("\n"))};
+$("csv").onclick=async()=>{
+  const q=s=>'"'+String(s??"").replace(/"/g,'""')+'"';
+  const L=[["Time","Shift","Part","Lot","Cavity","Inspector","Item","Result","Location","Value","Remark","Photo"]];
+  (await dbAll()).forEach(r=>{
+    r.items.forEach(it=>{
+      const entries=(it.e||[]).filter(e=>!it.loc||String(e.v??"").trim()!==""||e.ng||String(e.n||"").trim()!==""||!!e.img);
+      entries.forEach(e=>L.push([r.t,r.shift,r.part,r.lot,r.cav,r.insp,it.k,e.ng?"NOT OK":"OK",e.loc,e.v,e.n,e.img?"yes":""]));
+    });
+  });
+  saveFile("flashguard_inspection_all.csv","\\ufeff"+L.map(r=>r.map(q).join(",")).join("\\n"));
+};
 
 $("dt").value=stamp();setInterval(()=>$("dt").value=stamp(),30000);
 $("sync").onclick=()=>sync(true);window.addEventListener("online",()=>sync());
