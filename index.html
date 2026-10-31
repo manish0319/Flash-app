@@ -208,6 +208,12 @@ input.vin.vng{border-color:var(--ng);background:var(--ngbg);color:var(--ng);font
 }
 @media(max-width:520px){.tools{grid-template-columns:1fr 1fr}.tools input{grid-column:1/-1}.stat b{font-size:22px}}
 
+/* ---------- layout editor ---------- */
+.ied{margin-bottom:12px}
+.ied-act{display:flex;gap:6px;flex:0 0 auto}.ied-act .sec{min-height:36px;padding:4px 10px}
+.ied.tv .f-rule{display:none}.ied.tc .f-max{display:none}.ied:not(.hl) .f-lab{display:none}
+.ied .grid>div{min-width:0}
+
 /* ---------- print ---------- */
 @media print{#login,#app{display:none!important}}
 @page{size:A4;margin:0}
@@ -275,6 +281,7 @@ input.vin.vng{border-color:var(--ng);background:var(--ngbg);color:var(--ng);font
   <section class="view" id="v-inspect" hidden>
     <div class="sect">Batch details</div>
     <div class="card"><div class="grid">
+      <div style="grid-column:1/-1"><label for="layout">Part family / layout</label><select id="layout"></select></div>
       <div><label>Date / Time (auto)</label><input id="dt" readonly></div>
       <div><label>Shift</label><select id="shift"><option>A</option><option>B</option></select></div>
       <div><label>Part Name</label><input id="part" placeholder="Part name"></div>
@@ -295,13 +302,13 @@ input.vin.vng{border-color:var(--ng);background:var(--ngbg);color:var(--ng);font
     <div class="sect">Saved reports <span id="rscope">Stored on this phone</span></div>
     <div class="card">
       <div style="overflow-x:auto"><table class="h" id="hist"></table></div>
-      <div class="sub" style="margin-top:10px">If Print does not open, tap “Report file”, open the downloaded file in your browser and print it or save as PDF.</div>
-      <div class="acts"><button class="sec" id="sync">Upload pending now</button><button class="sec" id="csv">Export all as CSV</button></div>
+      <div class="sub" style="margin-top:10px">Every submitted report is saved as a PDF in Google Drive. Tap PDF to open it on any phone. Reports shown here are the same on every phone.</div>
+      <div class="acts"><button class="sec" id="sync">Upload pending now</button><button class="sec" id="csv">Export this phone’s data as CSV</button></div>
     </div>
   </section>
 
   <section class="view" id="v-admin" hidden>
-    <div class="seg" id="aseg"><button type="button" data-a="reports" class="on">All reports</button><button type="button" data-a="users">Users</button><button type="button" data-a="limits">Limits</button></div>
+    <div class="seg" id="aseg"><button type="button" data-a="reports" class="on">All reports</button><button type="button" data-a="users">Users</button><button type="button" data-a="layouts">Layouts</button></div>
 
     <div id="a-reports" class="apane">
       <div class="card">
@@ -328,11 +335,24 @@ input.vin.vng{border-color:var(--ng);background:var(--ngbg);color:var(--ng);font
       <div class="acts"><button class="pri" id="usave" type="button" style="min-height:44px">Save user</button><button class="sec" id="unew" type="button">Clear form</button></div></div>
     </div>
 
-    <div id="a-limits" class="apane" hidden>
-      <div class="card">
-        <div class="sub" style="margin:0 0 12px">Maximum reading in mm. A reading above the limit turns red and marks NG automatically. Inspectors never see these values.</div>
-        <div class="lgrid" id="lgrid"></div>
-        <div class="acts"><button class="pri" id="lsave" type="button" style="min-height:44px">Save limits</button></div>
+    <div id="a-layouts" class="apane" hidden>
+      <div id="lay-list">
+        <div class="card">
+          <div class="sub" style="margin:0 0 10px">Each part family has its own checklist. Inspectors choose the family when they start an inspection. Limits you enter here are never shown to inspectors.</div>
+          <div style="overflow-x:auto"><table class="h" id="ltab"></table></div>
+          <div class="acts"><button class="pri" id="lnew" type="button" style="min-height:44px">+ New layout</button></div>
+        </div>
+      </div>
+      <div id="lay-edit" hidden>
+        <div class="sect">Layout details</div>
+        <div class="card"><div class="grid">
+          <div><label for="ln">Part family name</label><input id="ln" placeholder="e.g. Angular Open Cage"></div>
+          <div><label for="la">Status</label><select id="la"><option value="YES">Active</option><option value="NO">Hidden</option></select></div>
+        </div></div>
+        <div class="sect">Checklist items</div>
+        <div id="litems"></div>
+        <div class="acts"><button class="sec" id="ladd" type="button">+ Add item</button></div>
+        <div class="acts" style="margin-top:16px"><button class="pri" id="lsave" type="button" style="min-height:48px">Save layout</button><button class="sec" id="lcancel" type="button">Cancel</button></div>
       </div>
     </div>
   </section>
@@ -415,14 +435,14 @@ async function sync(manual){
   const pend=(await dbAll()).filter(r=>!r.synced);
   if(!pend.length){if(manual)msg("Everything is already uploaded.");return}
   if(!navigator.onLine){if(manual)msg("No internet. Will upload automatically later.",1);return}
-  syncing=true;let ok=0,err="";
+  syncing=true;let ok=0,err="",pdfBad="";
   for(const r of pend){try{
-    const res=await fetch(CFG.url,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({key:CFG.key,action:"submit",token:SESSION.token,rec:r})});
+    const res=await fetch(CFG.url,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({key:CFG.key,action:"submit",token:SESSION.token,logo:logoData(),rec:r})});
     const j=await res.json();
-    if(j.ok){r.synced=true;await dbPut(r);ok++}else{err=j.error||"unknown";break}
+    if(j.ok){r.synced=true;r.pdfFail=(j.pdf===false)?(j.pdfError||"PDF failed"):"";if(r.pdfFail)pdfBad=r.pdfFail;await dbPut(r);ok++}else{err=j.error||"unknown";break}
   }catch(e){err="network";break}}
-  syncing=false;await hist();
-  if(ok)msg("Uploaded "+ok+" report(s) to Google Sheet ✔");
+  syncing=false;await hist();refreshReports();
+  if(ok)msg(pdfBad?"Uploaded, but PDF failed: "+pdfBad:"Uploaded "+ok+" report(s). PDF saved to Google Drive ✔",!!pdfBad);
   else if(err==="network"){if(manual)msg("Upload failed. Will retry automatically.",1)}
   else if(err){if(/log in/i.test(err))logout("Session expired. Please log in again.",true);else msg("Sheet error: "+err,1)}}
 // ---------- form
@@ -594,7 +614,7 @@ $("save").onclick=async()=>{const er=check();if(er){msg(er[0],1);const t=$(er[1]
   if(!finalType){msg("Enter the custom inspection type.",1);$("customType").focus();return}
   const doneN=S.filter(s=>s.r).length,ngN=S.filter(s=>s.r==="ng").length,skN=ITEMS.length-doneN;
   if(!confirm(`Submit this report?\n\nInspected: ${doneN} of ${ITEMS.length}\nNot OK: ${ngN}`+(skN?`\nNot inspected: ${skN}`:"")))return;
-  const rec={uid:Date.now().toString(36)+Math.random().toString(36).slice(2,7),synced:false,t:stamp(),shift:$("shift").value,inspectionType:finalType,part:$("part").value,lot:$("lot").value,cav:$("cav").value,insp:$("insp").value,cm:$("cm").value,
+  const rec={uid:Date.now().toString(36)+Math.random().toString(36).slice(2,7),synced:false,layout:{id:CURL,name:((usable().find(l=>l.id===CURL))||{}).name||""},t:stamp(),shift:$("shift").value,inspectionType:finalType,part:$("part").value,lot:$("lot").value,cav:$("cav").value,insp:$("insp").value,cm:$("cm").value,
     ng:S.filter(s=>s.r==="ng").length,skipped:ITEMS.filter((_,i)=>!S[i].r).map(x=>x.k),items:S.map((s,i)=>({no:i+1,k:ITEMS[i].k,loc:ITEMS[i].lab||"",val:ITEMS[i].val?1:0,p:s.p.map(x=>({...x})),r:s.r,e:s.e.map(e=>({...e,ng:ITEMS[i].loc?e.ng:s.r==="ng"}))})).filter(x=>x.r)};
   await dbAdd(rec);S=ITEMS.map(()=>({r:"",e:[],p:[]}));initRows();$("cm").value="";$("inspectionType").value="DAILY VISUAL INSPECTION";$("customType").value="";$("customTypeWrap").hidden=true;render();await hist();window.scrollTo(0,0);
   msg(rec.ng?"Saved. NOT OK items found. Inform the supervisor.":"Saved. All OK.",!!rec.ng);sync();show("home")};
@@ -648,7 +668,7 @@ function report(r){
   const totalNg=Number(r.ng||0);
   return `<div class="report-head" style="display:flex;align-items:center;gap:18px;border-bottom:2px solid #000;padding:0 0 10px;margin-bottom:10px"><img src="${COMPANY_LOGO}" alt="TMKI logo" style="width:260px;max-height:60px;object-fit:contain"><div style="flex:1;text-align:center"><h2 style="font-size:19px;line-height:1.25;color:#000;margin:0">VISUAL DIMENSION INSPECTION REPORT</h2><div style="font-size:10px;color:#000;margin-top:5px">Doc No.: CD-I-025-02 · Rev. 00</div></div></div>
   <table class="meta"><tr><td><b>Date / Time</b><br>${esc(r.t||"—")}</td><td><b>Shift</b><br>${esc(r.shift||"—")}</td><td><b>Submitted by (Inspector)</b><br>${esc(r.insp||"—")}</td></tr>
-  <tr><td><b>Inspection Type</b><br>${esc(r.inspectionType||"—")}</td><td><b>Part Name</b><br>${esc(r.part||"—")}</td><td><b>Lot No. / Cavity No.</b><br>${esc(r.lot||"—")} / ${esc(r.cav||"—")}</td></tr></table>
+  <tr><td><b>Inspection Type</b><br>${esc(r.inspectionType||"—")}</td><td><b>Part Name / Family</b><br>${esc(r.part||"—")}${r.layout&&r.layout.name?" · "+esc(r.layout.name):""}</td><td><b>Lot No. / Cavity No.</b><br>${esc(r.lot||"—")} / ${esc(r.cav||"—")}</td></tr></table>
   <table><thead><tr><th>#</th><th>Inspection Characteristic</th><th>Result</th><th>Recorded Readings / Locations</th><th>Remarks</th></tr></thead><tbody>${rows}</tbody></table>
   <p class="overall" style="padding:8px 0"><b>Overall result:</b> <span class="${totalNg?"ng":"ok"}">${totalNg?totalNg+" NOT OK inspection item(s)":"ALL CHECKED ITEMS OK"}</span> · Items inspected: ${r.items.length} of ${r.items.length+((r.skipped||[]).length)}</p>${(r.skipped&&r.skipped.length)?`<p><b>Not inspected:</b> ${r.skipped.map(esc).join(", ")}</p>`:""}
   ${r.cm?`<p><b>General comments:</b> ${esc(r.cm)}</p>`:""}
@@ -661,25 +681,60 @@ async function getRec(id){return(await dbAll()).find(x=>x.id===id)}
 const wrapP=h=>`<table class="pwrap"><thead><tr class="pwr"><td class="pgw"><div class="pgap"></div></td></tr></thead><tbody><tr class="pwr"><td class="pgw pgb">${h}</td></tr></tbody><tfoot><tr class="pwr"><td class="pgw"><div class="pgap"></div></td></tr></tfoot></table>`;
 const imgsReady=root=>Promise.all([...root.querySelectorAll("img")].map(im=>Promise.race([(im.decode?im.decode():Promise.resolve()).catch(()=>{}),new Promise(r=>setTimeout(r,3000))])));
 async function printRec(r){$("prt").innerHTML=`<style>${RS}</style>`+wrapP(report(r));await imgsReady($("prt"));try{window.print()}catch(e){msg("Printing is blocked. Use “Report file”.",1)}}
-async function saveFile(name,data){try{const d=await claude.use("downloads");if(d){await d.save({filename:name,data});return}}catch(e){}msg("Download is not available here.",1)}
+async function saveFile(name,data){
+  try{if(typeof claude!=="undefined"){const d=await claude.use("downloads");if(d){await d.save({filename:name,data});return}}}catch(e){}
+  try{const b=new Blob([data],{type:name.endsWith(".csv")?"text/csv":"text/html"}),u=URL.createObjectURL(b),a=document.createElement("a");a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),30000)}
+  catch(e){msg("Download is not available here.",1)}}
 const fn=r=>("TMKI_Flash_Inspection_"+r.lot+"_"+r.cav+"_"+r.t).replace(/[^\w-]+/g,"_");
 
 const mine=a=>SESSION&&SESSION.user.role==="admin"?a:a.filter(x=>SESSION&&x.insp===SESSION.user.name);
+let SREPS=[];
+const repKey=()=>"tmki_reps_"+(SESSION?SESSION.user.username:"");
+const logoData=()=>/^data:/.test(COMPANY_LOGO)?COMPANY_LOGO:"";
+async function refreshReports(){
+  if(!SESSION||!navigator.onLine)return;
+  const j=await api("reports");
+  if(j.ok){SREPS=j.reports||[];try{localStorage.setItem(repKey(),JSON.stringify(SREPS))}catch(e){}hist()}}
+async function repRows(){
+  const loc=mine(await dbAll()),byUid=new Map(loc.map(x=>[String(x.uid),x])),seen=new Set(),pend=[],srv=[],rest=[];
+  const mk=(x,over)=>Object.assign({uid:String(x.uid),t:x.t,part:x.part,lot:x.lot,cav:x.cav,insp:x.insp,ng:+x.ng||0,layout:(x.layout&&x.layout.name)||"",pdf:false,synced:!!x.synced,inList:false,local:x},over);
+  SREPS.forEach(r=>{const id=String(r.id);seen.add(id);srv.push({uid:id,t:r.t,part:r.part,lot:r.lot,cav:r.cav,insp:r.insp,ng:+r.ng||0,layout:r.layout||"",pdf:!!r.pdf,synced:true,inList:true,local:byUid.get(id)||null})});
+  loc.sort((a,b)=>b.id-a.id).forEach(x=>{if(seen.has(String(x.uid)))return;(x.synced?rest:pend).push(mk(x))});
+  return pend.concat(srv,rest)}
 async function hist(){
   if(!SESSION)return;
-  const adm=isAdmin(),all=mine(await dbAll()).sort((x,y)=>y.id-x.id),a=all.slice(0,30);
-  $("hist").innerHTML="<tr><th>Time / Lot</th><th>Result</th><th></th></tr>"+(a.length?a.map(x=>`<tr><td>${esc(x.t)}<br>Lot ${esc(x.lot)} · Cav ${esc(x.cav)}${adm?`<br><span class="mut">${esc(x.insp)}</span>`:""}</td><td class="res ${x.ng?"ng":"ok"}">${x.ng?x.ng+" NG":"OK"}<br><span class="mut">${x.synced?"✔ In Sheet":"⏳ Pending upload"}</span></td>
-  <td><button class="sec" data-p="${x.id}">Print</button> <button class="sec" data-d="${x.id}">Report file</button>${adm?` <button class="sec" data-x="${x.id}">🗑</button>`:""}</td></tr>`).join(""):"<tr><td colspan=3>No reports yet</td></tr>");
+  const adm=isAdmin(),all=await repRows(),a=all.slice(0,60);
+  const st=x=>!x.synced?"⏳ Pending upload":x.pdf?"✔ PDF in Drive":(x.local&&x.local.pdfFail?"⚠ PDF failed":"✔ In Sheet");
+  $("hist").innerHTML="<tr><th>Time / Lot</th><th>Result</th><th></th></tr>"+(a.length?a.map(x=>`<tr><td>${esc(x.t)}<br>Lot ${esc(x.lot)} · Cav ${esc(x.cav)}<br><span class="mut">${esc(x.layout)}${adm?(x.layout?" · ":"")+esc(x.insp):""}</span></td><td class="res ${x.ng?"ng":"ok"}">${x.ng?x.ng+" NG":"OK"}<br><span class="mut">${st(x)}</span></td>
+  <td>${x.pdf?`<button class="sec" data-pdf="${esc(x.uid)}">PDF</button> `:""}${x.local&&((x.inList&&!x.pdf)||x.local.pdfFail)?`<button class="sec" data-rp="${esc(x.uid)}">Make PDF</button> `:""}${x.local?`<button class="sec" data-p="${x.local.id}">Print</button>`:""}${adm&&x.local&&!x.synced?` <button class="sec" data-x="${x.local.id}">🗑</button>`:""}</td></tr>`).join(""):"<tr><td colspan=3>No reports yet</td></tr>");
   const today=new Date().toLocaleDateString("en-GB"),td=all.filter(x=>String(x.t).startsWith(today));
-  $("s1").textContent=td.length;$("s2").textContent=td.reduce((n,x)=>n+(+x.ng||0),0);$("s3").textContent=all.filter(x=>!x.synced).length;
-  $("recent").innerHTML=all.slice(0,3).map(x=>`<div class="rrow"><div><b>Lot ${esc(x.lot)} · Cav ${esc(x.cav)}</b><div class="mut">${esc(x.t)}${x.part?" · "+esc(x.part):""}${adm?" · "+esc(x.insp):""}</div></div><div class="res ${x.ng?"ng":"ok"}">${x.ng?x.ng+" NG":"OK"}<div class="mut">${x.synced?"✔ In Sheet":"⏳ Pending"}</div></div></div>`).join("")||'<div class="mut">No reports yet. Start your first inspection.</div>';
-  $("rscope").textContent=adm?"All reports on this phone":"Your reports on this phone";
+  $("s1").textContent=td.length;$("s2").textContent=td.reduce((n,x)=>n+x.ng,0);$("s3").textContent=all.filter(x=>!x.synced).length;
+  $("recent").innerHTML=all.slice(0,3).map(x=>`<div class="rrow"><div><b>Lot ${esc(x.lot)} · Cav ${esc(x.cav)}</b><div class="mut">${esc(x.t)}${x.layout?" · "+esc(x.layout):""}${adm?" · "+esc(x.insp):""}</div></div><div class="res ${x.ng?"ng":"ok"}">${x.ng?x.ng+" NG":"OK"}<div class="mut">${st(x)}</div></div></div>`).join("")||'<div class="mut">No reports yet. Start your first inspection.</div>';
+  $("rscope").textContent=adm?"All inspectors, all phones":"Your reports, all phones";
 }
-$("hist").addEventListener("click",async e=>{const b=e.target.closest("button");if(!b)return;
-  if(b.dataset.p)printRec(await getRec(+b.dataset.p));
-  else if(b.dataset.d){const r=await getRec(+b.dataset.d);
-    saveFile(fn(r)+".html",`<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>VISUAL DIMENSION INSPECTION REPORT</title><style>${RS}body{margin:0;background:#fff}@page{size:A4;margin:0}</style></head><body><div class="rp">${wrapP(report(r))}</div></body></html>`)}
-  else if(b.dataset.x){if(b.dataset.s!=="1"){b.dataset.s="1";b.textContent="Sure?";setTimeout(()=>{b.dataset.s="";b.textContent="🗑"},3000)}else{await dbDel(+b.dataset.x);hist()}}});
+async function openPdf(uid,btn){
+  const old=btn.textContent;btn.disabled=true;btn.textContent="…";
+  const j=await api("getPdf",{id:uid});
+  btn.disabled=false;btn.textContent=old;
+  if(!j.ok){msg(apiErr(j),1);return}
+  try{
+    const bytes=Uint8Array.from(atob(j.data),c=>c.charCodeAt(0)),url=URL.createObjectURL(new Blob([bytes],{type:"application/pdf"}));
+    const a=document.createElement("a");a.href=url;a.download=j.name||"report.pdf";a.target="_blank";a.rel="noopener";document.body.appendChild(a);a.click();a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),60000)}
+  catch(e){msg("Could not open the PDF on this device.",1)}}
+async function retryPdf(uid,btn){
+  const r=(await dbAll()).find(x=>String(x.uid)===String(uid));if(!r){msg("This report is not saved on this phone, so the PDF cannot be rebuilt here.",1);return}
+  const old=btn.textContent;btn.disabled=true;btn.textContent="…";
+  const j=await api("retryPdf",{rec:r,logo:logoData()});
+  btn.disabled=false;btn.textContent=old;
+  if(j.ok){r.pdfFail="";await dbPut(r);msg("PDF saved to Google Drive ✔");refreshReports()}else msg(apiErr(j),1)}
+async function hClick(e){
+  const b=e.target.closest("button");if(!b)return;
+  if(b.dataset.pdf)openPdf(b.dataset.pdf,b);
+  else if(b.dataset.rp)retryPdf(b.dataset.rp,b);
+  else if(b.dataset.p)printRec(await getRec(+b.dataset.p));
+  else if(b.dataset.x){if(b.dataset.s!=="1"){b.dataset.s="1";b.textContent="Sure?";setTimeout(()=>{b.dataset.s="";b.textContent="🗑"},3000)}else{await dbDel(+b.dataset.x);hist()}}}
+$("hist").addEventListener("click",hClick);$("arep").addEventListener("click",hClick);
 $("csv").onclick=async()=>{
   const q=s=>'"'+String(s??"").replace(/"/g,'""')+'"';
   const L=[["Time","Shift","Inspection Type","Part","Lot","Cavity","Inspector","Item","Result","Location","Value","Remark","Photo"]];
@@ -701,8 +756,17 @@ $("inspectionType").addEventListener("change",()=>{
 // ---------- accounts, navigation, admin
 let SESSION=null,LASTUSER="";
 const isAdmin=()=>!!SESSION&&SESSION.user.role==="admin";
-function applyLimits(L){ITEMS.forEach(it=>{if(it.val&&+L[it.k]>0)it.max=+L[it.k]})}
-function cacheLimits(L){try{localStorage.setItem("tmki_limits",JSON.stringify(L))}catch(e){}}
+// ---- part-family layouts (checklists)
+const BASE_ITEMS=ITEMS.map(x=>({...x}));
+const FALLBACK={id:"snap_cage",name:"Snap Cage",internal:true,items:BASE_ITEMS};
+let LAYOUTS=[],CURL="",LAY_ALL=[];
+const toInternal=c=>{const it={k:c.k,d:c.d||"",val:c.t==="v"?1:0};if(c.t==="v")it.max=+c.max;if(+c.loc===1){it.loc=1;it.lab=c.lab||"Location";it.pl=it.lab+"s"}if(c.rule)it.rule=c.rule;return it};
+const layoutItems=L=>L.internal?L.items.map(x=>({...x})):L.items.map(toInternal);
+const usable=()=>{const a=LAYOUTS.filter(l=>l.items&&l.items.length);return a.length?a:[FALLBACK]};
+function fillLayoutSelect(){const a=usable();if(!a.some(l=>l.id===CURL))CURL=a[0].id;$("layout").innerHTML=a.map(l=>`<option value="${esc(l.id)}">${esc(l.name)}</option>`).join("");$("layout").value=CURL}
+function useLayout(id){const a=usable(),L=a.find(l=>l.id===id)||a[0];CURL=L.id;ITEMS.splice(0,ITEMS.length,...layoutItems(L));S=ITEMS.map(()=>({r:"",e:[],p:[]}));initRows();render();$("layout").value=CURL;try{localStorage.setItem("tmki_layout",CURL)}catch(e){}}
+function setLayouts(list){LAYOUTS=list||[];try{localStorage.setItem("tmki_layouts",JSON.stringify(LAYOUTS))}catch(e){}fillLayoutSelect();if(S.every(s=>!s.r))useLayout(CURL)}
+$("layout").addEventListener("change",()=>{if(S.some(s=>s.r)&&!confirm("Changing the part family clears the inspection you have started. Continue?")){$("layout").value=CURL;return}useLayout($("layout").value)});
 async function api(action,data,noAuth){
   try{
     const r=await fetch(CFG.url,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(Object.assign({key:CFG.key,action,token:noAuth?undefined:(SESSION&&SESSION.token)},data||{}))});
@@ -720,7 +784,7 @@ function show(v){
   document.querySelectorAll(".view").forEach(x=>x.hidden=x.id!=="v-"+v);
   document.querySelectorAll("#nav button").forEach(b=>b.classList.toggle("on",b.dataset.v===v));
   $("bar").hidden=v!=="inspect";window.scrollTo(0,0);
-  if(v==="home"||v==="reports")hist();
+  if(v==="home"||v==="reports"){hist();refreshReports()}
   if(v==="admin"&&isAdmin())aTab(curA)}
 function enterApp(){
   const u=SESSION.user;
@@ -730,12 +794,13 @@ function enterApp(){
   $("insp").value=u.name;$("hwho").textContent=u.name;
   $("hmeta").textContent=(u.role==="admin"?"Administrator":"Inspector")+" · "+new Date().toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long"});
   $("nadmin").hidden=u.role!=="admin";$("csv").hidden=u.role!=="admin";
-  if(S.every(s=>!s.r)){initRows();render()}
-  show("home");sync();refreshLimits()}
-async function refreshLimits(){
+  fillLayoutSelect();if(S.every(s=>!s.r))useLayout(CURL);
+  try{SREPS=JSON.parse(localStorage.getItem(repKey())||"[]")}catch(e){SREPS=[]}
+  show("home");sync();refreshLayouts()}
+async function refreshLayouts(){
   if(!navigator.onLine||!SESSION)return;
-  const j=await api("limits");
-  if(j.ok&&j.limits){applyLimits(j.limits);cacheLimits(j.limits);if(S.every(s=>!s.r)){initRows();render()}}}
+  const j=await api("layouts");
+  if(j.ok&&j.layouts)setLayouts(j.layouts)}
 
 $("nav").addEventListener("click",e=>{const b=e.target.closest("button");if(b)show(b.dataset.v)});
 document.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>show(b.dataset.go));
@@ -753,15 +818,15 @@ $("lf").addEventListener("submit",async e=>{
   if(!j.ok){$("lerr").textContent=j.error==="network"?"Could not reach the server. Check your internet.":j.error;return}
   SESSION={token:j.token,user:j.user};
   try{localStorage.setItem("tmki_session",JSON.stringify(SESSION))}catch(e){}
-  if(j.limits){applyLimits(j.limits);cacheLimits(j.limits)}
+  if(j.layouts)setLayouts(j.layouts);
   $("lp").value="";enterApp()});
 
 // admin: reports from the Google Sheet
 let AREPS=[],curA="reports",AUSERS=[];
 function aTab(t){curA=t;
   document.querySelectorAll("#aseg button").forEach(b=>b.classList.toggle("on",b.dataset.a===t));
-  ["reports","users","limits"].forEach(x=>$("a-"+x).hidden=x!==t);
-  if(t==="reports")aReports();if(t==="users")aUsers();if(t==="limits")aLimits()}
+  ["reports","users","layouts"].forEach(x=>$("a-"+x).hidden=x!==t);
+  if(t==="reports")aReports();if(t==="users")aUsers();if(t==="layouts")aLayouts()}
 $("aseg").addEventListener("click",e=>{const b=e.target.closest("button");if(b)aTab(b.dataset.a)});
 async function aReports(){
   $("arep").innerHTML='<tr><td class="mut">Loading…</td></tr>';
@@ -772,7 +837,7 @@ function aRender(){
   const q=$("rq").value.trim().toLowerCase(),f=$("rflt").value;
   const a=AREPS.filter(r=>(f!=="ng"||+r.ng>0)&&(!q||[r.insp,r.part,r.lot,r.cav,r.t].join(" ").toLowerCase().includes(q)));
   $("acount").textContent="Showing "+a.length+" of "+AREPS.length+" latest reports";
-  $("arep").innerHTML="<tr><th>Date / Inspector</th><th>Part / Lot</th><th>Result</th></tr>"+(a.length?a.map(r=>`<tr><td>${esc(r.t)}<br><span class="mut">${esc(r.insp)} · Shift ${esc(r.shift)}</span></td><td>${esc(r.part||"—")}<br><span class="mut">Lot ${esc(r.lot)} · Cav ${esc(r.cav)}</span></td><td class="res ${+r.ng?"ng":"ok"}">${+r.ng?r.ng+" NG":"OK"}</td></tr>`).join(""):'<tr><td colspan="3" class="mut">No reports found</td></tr>')}
+  $("arep").innerHTML="<tr><th>Date / Inspector</th><th>Part / Lot</th><th>Result</th><th></th></tr>"+(a.length?a.map(r=>`<tr><td>${esc(r.t)}<br><span class="mut">${esc(r.insp)} · Shift ${esc(r.shift)}</span></td><td>${esc(r.part||"—")}<br><span class="mut">${r.layout?esc(r.layout)+" · ":""}Lot ${esc(r.lot)} · Cav ${esc(r.cav)}</span></td><td class="res ${+r.ng?"ng":"ok"}">${+r.ng?r.ng+" NG":"OK"}</td><td>${r.pdf?`<button class="sec" data-pdf="${esc(r.id)}">PDF</button>`:""}</td></tr>`).join(""):'<tr><td colspan="4" class="mut">No reports found</td></tr>')}
 ["rq","rflt"].forEach(id=>$(id).addEventListener("input",aRender));
 $("rrefresh").onclick=aReports;
 
@@ -792,17 +857,68 @@ $("usave").onclick=async()=>{
   if(j.ok){msg("User saved ✔");$("unew").click();aUsers()}else msg(apiErr(j),1)};
 
 // admin: limits (inspectors never see these)
-function aLimits(){
-  $("lgrid").innerHTML=ITEMS.filter(it=>it.val).map(it=>`<label>${esc(it.k)}</label><input inputmode="decimal" data-l="${esc(it.k)}" value="${it.max}" aria-label="${esc(it.k)} limit in mm">`).join("")}
+let EDL=null;
+async function aLayouts(){
+  $("lay-edit").hidden=true;$("lay-list").hidden=false;
+  $("ltab").innerHTML='<tr><td class="mut">Loading…</td></tr>';
+  const j=await api("layouts",{all:true});
+  if(!j.ok){$("ltab").innerHTML=`<tr><td class="mut">${esc(apiErr(j))}</td></tr>`;return}
+  LAY_ALL=j.layouts||[];
+  $("ltab").innerHTML="<tr><th>Part family</th><th>Items</th><th></th></tr>"+LAY_ALL.map((l,i)=>`<tr><td><b>${esc(l.name)}</b>${l.active?"":'<br><span class="mut">Hidden</span>'}</td><td>${l.items.length?l.items.length+" items":'<span class="mut">Empty: add items</span>'}</td><td><button class="sec" data-le="${i}">Edit</button> <button class="sec" data-ld="${i}">Duplicate</button></td></tr>`).join("")}
+function itemEd(c,i){
+  const o=(v,t)=>`<option value="${v}"${c.t===v?" selected":""}>${t}</option>`;
+  return `<div class="card ied ${c.t==="v"?"tv":"tc"}${c.loc?" hl":""}" data-i="${i}">
+  <div class="ihead"><div class="it"><span class="no">${i+1}</span><span class="ied-t">${esc(c.k||"New item")}</span></div>
+  <div class="ied-act"><button class="sec" type="button" data-e="up" aria-label="Move up">↑</button><button class="sec" type="button" data-e="dn" aria-label="Move down">↓</button><button class="sec" type="button" data-e="rm" aria-label="Remove">✕</button></div></div>
+  <div class="grid" style="margin-top:12px">
+    <div style="grid-column:1/-1"><label>Item name</label><input data-ef="k" value="${esc(c.k)}" placeholder="e.g. Pocket OD Flash"></div>
+    <div style="grid-column:1/-1"><label>Instruction for the inspector</label><textarea data-ef="d" rows="2">${esc(c.d)}</textarea></div>
+    <div><label>Type</label><select data-ef="t">${o("v","Reading (mm)")}${o("c","OK / NOT OK")}</select></div>
+    <div class="f-max"><label>Max limit (mm)</label><input inputmode="decimal" data-ef="max" value="${esc(c.max)}" placeholder="e.g. 0.1"></div>
+    <div class="f-rule"><label>Acceptance note (optional)</label><input data-ef="rule" value="${esc(c.rule)}" placeholder="e.g. Not allowed"></div>
+    <div><label>Check every location?</label><select data-ef="loc"><option value="0"${c.loc?"":" selected"}>No, one check</option><option value="1"${c.loc?" selected":""}>Yes, rows A–Z</option></select></div>
+    <div class="f-lab"><label>Location name</label><input data-ef="lab" value="${esc(c.lab)}" placeholder="e.g. Pocket"></div>
+  </div></div>`}
+function renderEd(){$("litems").innerHTML=EDL.items.map(itemEd).join("")||'<div class="card mut">No items yet. Tap “Add item”.</div>'}
+function openEditor(l){
+  EDL={id:l.id||"",name:l.name||"",active:l.active===false?"NO":"YES",items:(l.items||[]).map(c=>({k:c.k||"",d:c.d||"",t:c.t==="c"?"c":"v",max:c.max??"",loc:+c.loc===1?1:0,lab:c.lab||"",rule:c.rule||""}))};
+  $("ln").value=EDL.name;$("la").value=EDL.active;renderEd();
+  $("lay-list").hidden=true;$("lay-edit").hidden=false;window.scrollTo(0,0)}
+$("ltab").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;
+  if(b.dataset.le!==undefined)openEditor(LAY_ALL[+b.dataset.le]);
+  else if(b.dataset.ld!==undefined){const l=LAY_ALL[+b.dataset.ld];openEditor({name:l.name+" (copy)",items:l.items})}});
+$("lnew").onclick=()=>openEditor({name:"",items:[]});
+$("ladd").onclick=()=>{EDL.items.push({k:"",d:"",t:"v",max:"",loc:0,lab:"",rule:""});renderEd();const last=$("litems").lastElementChild;if(last)last.scrollIntoView({behavior:"smooth",block:"center"})};
+$("lcancel").onclick=()=>aLayouts();
+$("ln").addEventListener("input",()=>{if(EDL)EDL.name=$("ln").value});
+$("la").addEventListener("change",()=>{if(EDL)EDL.active=$("la").value});
+$("litems").addEventListener("input",e=>{
+  const f=e.target.dataset.ef;if(!f||!EDL)return;
+  const card=e.target.closest(".ied"),c=EDL.items[+card.dataset.i],v=e.target.value;
+  if(f==="t"){c.t=v;card.classList.toggle("tv",v==="v");card.classList.toggle("tc",v==="c")}
+  else if(f==="loc"){c.loc=+v;card.classList.toggle("hl",v==="1")}
+  else{c[f]=v;if(f==="k")card.querySelector(".ied-t").textContent=v||"New item"}});
+$("litems").addEventListener("click",e=>{
+  const b=e.target.closest("[data-e]");if(!b||!EDL)return;
+  const i=+b.closest(".ied").dataset.i,a=b.dataset.e,L=EDL.items;
+  if(a==="rm"){if(!confirm("Remove this item?"))return;L.splice(i,1)}
+  else if(a==="up"&&i>0){const t=L[i-1];L[i-1]=L[i];L[i]=t}
+  else if(a==="dn"&&i<L.length-1){const t=L[i+1];L[i+1]=L[i];L[i]=t}
+  renderEd()});
 $("lsave").onclick=async()=>{
-  const L={};let bad=false;
-  document.querySelectorAll("[data-l]").forEach(i=>{const n=num(i.value);if(n===null||n<=0)bad=true;else L[i.dataset.l]=n});
-  if(bad){msg("Enter a valid limit for every item.",1);return}
-  const j=await api("saveLimits",{limits:L});
-  if(j.ok){applyLimits(L);cacheLimits(L);msg("Limits saved ✔")}else msg(apiErr(j),1)};
+  if(!EDL)return;EDL.name=$("ln").value.trim();
+  if(!EDL.name){msg("Enter the part family name.",1);return}
+  for(let i=0;i<EDL.items.length;i++){const c=EDL.items[i];
+    if(!String(c.k).trim()){msg("Item "+(i+1)+" needs a name.",1);return}
+    if(c.t==="v"){const n=num(c.max);if(n===null||n<=0){msg("Item "+(i+1)+": enter a max limit above 0.",1);return}}}
+  const items=EDL.items.map(c=>({k:String(c.k).trim(),d:c.d,t:c.t,max:c.t==="v"?num(c.max):undefined,loc:c.loc?1:0,lab:c.lab,rule:c.rule}));
+  $("lsave").disabled=true;
+  const j=await api("saveLayout",{layout:{id:EDL.id,name:EDL.name,active:EDL.active,items}});
+  $("lsave").disabled=false;
+  if(j.ok){msg("Layout saved ✔");refreshLayouts();aLayouts()}else msg(apiErr(j),1)};
 
 function boot(){
-  try{const L=JSON.parse(localStorage.getItem("tmki_limits")||"null");if(L)applyLimits(L)}catch(e){}
+  try{LAYOUTS=JSON.parse(localStorage.getItem("tmki_layouts")||"[]");CURL=localStorage.getItem("tmki_layout")||""}catch(e){LAYOUTS=[]}
   try{SESSION=JSON.parse(localStorage.getItem("tmki_session")||"null")}catch(e){SESSION=null}
   dbOpen().then(()=>{if(SESSION&&SESSION.token&&SESSION.user)enterApp();else showLogin()})}
 
