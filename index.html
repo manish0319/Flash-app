@@ -694,7 +694,22 @@ const logoData=()=>/^data:/.test(COMPANY_LOGO)?COMPANY_LOGO:"";
 async function refreshReports(){
   if(!SESSION||!navigator.onLine)return;
   const j=await api("reports");
-  if(j.ok){SREPS=j.reports||[];try{localStorage.setItem(repKey(),JSON.stringify(SREPS))}catch(e){}hist()}}
+  if(j.ok){SREPS=j.reports||[];try{localStorage.setItem(repKey(),JSON.stringify(SREPS))}catch(e){}
+    // drop local copies of reports that an admin deleted
+    const seen=new Set(SREPS.map(r=>String(r.id))),cand=(await dbAll()).filter(x=>x.synced&&!seen.has(String(x.uid))).slice(0,200);
+    if(cand.length){const k=await api("exists",{ids:cand.map(x=>String(x.uid))});if(k.ok&&Array.isArray(k.missing))for(const x of cand)if(k.missing.includes(String(x.uid)))await dbDel(x.id)}
+    hist()}}
+async function delReport(uid,btn){
+  if(!isAdmin())return;
+  if(!confirm("Delete this report from everywhere?\n\nIt is removed from the Google Sheet, and its PDF and photos go to the Google Drive bin. It disappears from every phone."))return;
+  btn.disabled=true;
+  const j=await api("deleteReport",{id:uid});
+  btn.disabled=false;
+  if(!j.ok){msg(apiErr(j),1);return}
+  const loc=(await dbAll()).find(x=>String(x.uid)===String(uid));if(loc)await dbDel(loc.id);
+  SREPS=SREPS.filter(r=>String(r.id)!==String(uid));AREPS=AREPS.filter(r=>String(r.id)!==String(uid));
+  try{localStorage.setItem(repKey(),JSON.stringify(SREPS))}catch(e){}
+  msg("Report deleted ✔");hist();aRender()}
 async function repRows(){
   const loc=mine(await dbAll()),byUid=new Map(loc.map(x=>[String(x.uid),x])),seen=new Set(),pend=[],srv=[],rest=[];
   const mk=(x,over)=>Object.assign({uid:String(x.uid),t:x.t,part:x.part,lot:x.lot,cav:x.cav,insp:x.insp,ng:+x.ng||0,layout:(x.layout&&x.layout.name)||"",pdf:false,synced:!!x.synced,inList:false,local:x},over);
@@ -706,7 +721,7 @@ async function hist(){
   const adm=isAdmin(),all=await repRows(),a=all.slice(0,60);
   const st=x=>!x.synced?"⏳ Pending upload":x.pdf?"✔ PDF in Drive":(x.local&&x.local.pdfFail?"⚠ PDF failed":"✔ In Sheet");
   $("hist").innerHTML="<tr><th>Time / Lot</th><th>Result</th><th></th></tr>"+(a.length?a.map(x=>`<tr><td>${esc(x.t)}<br>Lot ${esc(x.lot)} · Cav ${esc(x.cav)}<br><span class="mut">${esc(x.layout)}${adm?(x.layout?" · ":"")+esc(x.insp):""}</span></td><td class="res ${x.ng?"ng":"ok"}">${x.ng?x.ng+" NG":"OK"}<br><span class="mut">${st(x)}</span></td>
-  <td>${x.pdf?`<button class="sec" data-pdf="${esc(x.uid)}">PDF</button> `:""}${x.local&&((x.inList&&!x.pdf)||x.local.pdfFail)?`<button class="sec" data-rp="${esc(x.uid)}">Make PDF</button> `:""}${x.local?`<button class="sec" data-p="${x.local.id}">Print</button>`:""}${adm&&x.local&&!x.synced?` <button class="sec" data-x="${x.local.id}">🗑</button>`:""}</td></tr>`).join(""):"<tr><td colspan=3>No reports yet</td></tr>");
+  <td>${x.pdf?`<button class="sec" data-pdf="${esc(x.uid)}">PDF</button> `:""}${x.local&&((x.inList&&!x.pdf)||x.local.pdfFail)?`<button class="sec" data-rp="${esc(x.uid)}">Make PDF</button> `:""}${x.local?`<button class="sec" data-p="${x.local.id}">Print</button>`:""}${adm?(x.synced?` <button class="sec" data-del="${esc(x.uid)}" aria-label="Delete report">🗑</button>`:(x.local?` <button class="sec" data-x="${x.local.id}" aria-label="Delete report">🗑</button>`:"")):""}</td></tr>`).join(""):"<tr><td colspan=3>No reports yet</td></tr>");
   const today=new Date().toLocaleDateString("en-GB"),td=all.filter(x=>String(x.t).startsWith(today));
   $("s1").textContent=td.length;$("s2").textContent=td.reduce((n,x)=>n+x.ng,0);$("s3").textContent=all.filter(x=>!x.synced).length;
   $("recent").innerHTML=all.slice(0,3).map(x=>`<div class="rrow"><div><b>Lot ${esc(x.lot)} · Cav ${esc(x.cav)}</b><div class="mut">${esc(x.t)}${x.layout?" · "+esc(x.layout):""}${adm?" · "+esc(x.insp):""}</div></div><div class="res ${x.ng?"ng":"ok"}">${x.ng?x.ng+" NG":"OK"}<div class="mut">${st(x)}</div></div></div>`).join("")||'<div class="mut">No reports yet. Start your first inspection.</div>';
@@ -730,7 +745,8 @@ async function retryPdf(uid,btn){
   if(j.ok){r.pdfFail="";await dbPut(r);msg("PDF saved to Google Drive ✔");refreshReports()}else msg(apiErr(j),1)}
 async function hClick(e){
   const b=e.target.closest("button");if(!b)return;
-  if(b.dataset.pdf)openPdf(b.dataset.pdf,b);
+  if(b.dataset.del)delReport(b.dataset.del,b);
+  else if(b.dataset.pdf)openPdf(b.dataset.pdf,b);
   else if(b.dataset.rp)retryPdf(b.dataset.rp,b);
   else if(b.dataset.p)printRec(await getRec(+b.dataset.p));
   else if(b.dataset.x){if(b.dataset.s!=="1"){b.dataset.s="1";b.textContent="Sure?";setTimeout(()=>{b.dataset.s="";b.textContent="🗑"},3000)}else{await dbDel(+b.dataset.x);hist()}}}
@@ -837,7 +853,7 @@ function aRender(){
   const q=$("rq").value.trim().toLowerCase(),f=$("rflt").value;
   const a=AREPS.filter(r=>(f!=="ng"||+r.ng>0)&&(!q||[r.insp,r.part,r.lot,r.cav,r.t].join(" ").toLowerCase().includes(q)));
   $("acount").textContent="Showing "+a.length+" of "+AREPS.length+" latest reports";
-  $("arep").innerHTML="<tr><th>Date / Inspector</th><th>Part / Lot</th><th>Result</th><th></th></tr>"+(a.length?a.map(r=>`<tr><td>${esc(r.t)}<br><span class="mut">${esc(r.insp)} · Shift ${esc(r.shift)}</span></td><td>${esc(r.part||"—")}<br><span class="mut">${r.layout?esc(r.layout)+" · ":""}Lot ${esc(r.lot)} · Cav ${esc(r.cav)}</span></td><td class="res ${+r.ng?"ng":"ok"}">${+r.ng?r.ng+" NG":"OK"}</td><td>${r.pdf?`<button class="sec" data-pdf="${esc(r.id)}">PDF</button>`:""}</td></tr>`).join(""):'<tr><td colspan="4" class="mut">No reports found</td></tr>')}
+  $("arep").innerHTML="<tr><th>Date / Inspector</th><th>Part / Lot</th><th>Result</th><th></th></tr>"+(a.length?a.map(r=>`<tr><td>${esc(r.t)}<br><span class="mut">${esc(r.insp)} · Shift ${esc(r.shift)}</span></td><td>${esc(r.part||"—")}<br><span class="mut">${r.layout?esc(r.layout)+" · ":""}Lot ${esc(r.lot)} · Cav ${esc(r.cav)}</span></td><td class="res ${+r.ng?"ng":"ok"}">${+r.ng?r.ng+" NG":"OK"}</td><td>${r.pdf?`<button class="sec" data-pdf="${esc(r.id)}">PDF</button> `:""}<button class="sec" data-del="${esc(r.id)}" aria-label="Delete report">🗑</button></td></tr>`).join(""):'<tr><td colspan="4" class="mut">No reports found</td></tr>')}
 ["rq","rflt"].forEach(id=>$(id).addEventListener("input",aRender));
 $("rrefresh").onclick=aReports;
 
